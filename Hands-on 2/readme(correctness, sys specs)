@@ -11,3 +11,13 @@ The correctness of selection sort can be demonstrated by the loop invariant. At 
 The time complexity of selection sort is O(n^2), where n is the number of elements in the array. This is because, for each element in the array, the algorithm has to find the minimum element in the unsorted region, which involves comparing n elements in the worst case.
 
 While selection sort is correct, it is not the most efficient sorting algorithm for large datasets due to its time complexity. Its quadratic time complexity makes it less suitable for sorting large datasets compared to more advanced algorithms like merge sort or quicksort, which have average-case time complexities of O(n log n).
+
+c. System specifications
+
+System Information:
+CPU: Intel64 Family 6 Model 183 Stepping 1, GenuineIntel
+Total RAM: 16858472448 bytes
+System: Windows 10.0.22631
+
+Storage Information
+C:\ - Total: 1023176339456 bytes, Free: 928016908288 bytes
