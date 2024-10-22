@@ -1,0 +1,172 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
+typedef struct Node {
+    int key;
+    int value;
+    struct Node *prev;
+    struct Node *next;
+} Node;
+
+typedef struct HashTable {
+    Node **table;
+    int size;
+    int count;
+} HashTable;
+
+// Create a new node
+Node *createNode(int key, int value) {
+    Node *newNode = (Node *)malloc(sizeof(Node));
+    newNode->key = key;
+    newNode->value = value;
+    newNode->prev = NULL;
+    newNode->next = NULL;
+    return newNode;
+}
+
+// Create a new hash table
+HashTable *createHashTable(int initialSize) {
+    HashTable *hashTable = (HashTable *)malloc(sizeof(HashTable));
+    hashTable->size = initialSize;
+    hashTable->count = 0;
+    hashTable->table = (Node **)calloc(initialSize, sizeof(Node *));
+    return hashTable;
+}
+
+// Hash function using multiplication method
+int hashMultiply(int key, int size) {
+    double A = 0.6180339887; // (sqrt(5) - 1) / 2
+    return (int)(size * fmod(key * A, 1));
+}
+
+// Hash function using division method
+int hashDivide(int key, int size) {
+    return key % size;
+}
+
+// Insert key-value pair into the hash table
+void insert(HashTable *hashTable, int key, int value) {
+    int index = hashMultiply(key, hashTable->size);
+    Node *newNode = createNode(key, value);
+    
+    if (!hashTable->table[index]) {
+        hashTable->table[index] = newNode;
+    } else {
+        // Collision resolution by chaining
+        Node *head = hashTable->table[index];
+        while (head->next) {
+            head = head->next;
+        }
+        head->next = newNode;
+        newNode->prev = head;
+    }
+    
+    hashTable->count++;
+    if (hashTable->count >= hashTable->size) {
+        // Grow the table
+        int newSize = hashTable->size * 2;
+        rehash(hashTable, newSize);
+    }
+}
+
+// Rehashing function
+void rehash(HashTable *hashTable, int newSize) {
+    Node **oldTable = hashTable->table;
+    int oldSize = hashTable->size;
+    
+    hashTable->table = (Node **)calloc(newSize, sizeof(Node *));
+    hashTable->size = newSize;
+    hashTable->count = 0;
+
+    for (int i = 0; i < oldSize; i++) {
+        Node *current = oldTable[i];
+        while (current) {
+            insert(hashTable, current->key, current->value);
+            current = current->next;
+        }
+    }
+    
+    free(oldTable);
+}
+
+// Decrease size if too empty
+void checkShrink(HashTable *hashTable) {
+    if (hashTable->count <= hashTable->size / 4 && hashTable->size > 1) {
+        rehash(hashTable, hashTable->size / 2);
+    }
+}
+
+// Delete a key from the hash table
+void deleteKey(HashTable *hashTable, int key) {
+    int index = hashMultiply(key, hashTable->size);
+    Node *current = hashTable->table[index];
+
+    while (current) {
+        if (current->key == key) {
+            if (current->prev) {
+                current->prev->next = current->next;
+            } else {
+                hashTable->table[index] = current->next;
+            }
+            if (current->next) {
+                current->next->prev = current->prev;
+            }
+            free(current);
+            hashTable->count--;
+            checkShrink(hashTable);
+            return;
+        }
+        current = current->next;
+    }
+}
+
+// Display the hash table
+void displayHashTable(HashTable *hashTable) {
+    for (int i = 0; i < hashTable->size; i++) {
+        Node *current = hashTable->table[i];
+        if (current) {
+            printf("Index %d: ", i);
+            while (current) {
+                printf("(%d, %d) ", current->key, current->value);
+                current = current->next;
+            }
+            printf("\n");
+        }
+    }
+}
+
+// Clean up the hash table
+void freeHashTable(HashTable *hashTable) {
+    for (int i = 0; i < hashTable->size; i++) {
+        Node *current = hashTable->table[i];
+        while (current) {
+            Node *temp = current;
+            current = current->next;
+            free(temp);
+        }
+    }
+    free(hashTable->table);
+    free(hashTable);
+}
+
+int main() {
+    HashTable *hashTable = createHashTable(4);
+    
+    insert(hashTable, 1, 10);
+    insert(hashTable, 2, 20);
+    insert(hashTable, 3, 30);
+    insert(hashTable, 4, 40);
+    
+    printf("Hash Table after inserts:\n");
+    displayHashTable(hashTable);
+    
+    printf("Deleting key 2...\n");
+    deleteKey(hashTable, 2);
+    
+    printf("Hash Table after deleting key 2:\n");
+    displayHashTable(hashTable);
+    
+    freeHashTable(hashTable);
+    return 0;
+}
